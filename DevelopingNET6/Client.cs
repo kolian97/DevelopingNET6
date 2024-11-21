@@ -27,10 +27,8 @@ namespace DevelopingNET6
             {
                 try
                 {
-                    byte[] receiveBytes = udpClientClient.Receive(ref
-                    remoteEndPoint);
-                    string receivedData =
-                    Encoding.ASCII.GetString(receiveBytes);
+                    byte[] receiveBytes = udpClientClient.Receive(ref remoteEndPoint);
+                    string receivedData = Encoding.ASCII.GetString(receiveBytes);
                     var messageReceived = Message.FromJson(receivedData);
                     Console.WriteLine($"Получено сообщение от { messageReceived.FromName}:");
                 Console.WriteLine(messageReceived.Text);

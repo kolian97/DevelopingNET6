@@ -1,11 +1,41 @@
-﻿using System;
+﻿
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using DevelopingNET6;
-using DevelopingNET6.Model;
+using System.Text.Json;
 namespace DevelopingNET6
 {
+    public enum Command
+    {
+        Register,
+        Message,
+        Confirmation,
+        List
+    }
+
+    public class Message
+    {
+        public int Id { get; set; }
+        public string Text { get; set; } = null!;
+        public bool Received { get; set; }
+        public int FromUserId { get; set; }
+        public int ToUserId { get; set; }
+        public virtual User FromUser { get; set; } = null!;
+        public virtual User ToUser { get; set; } = null!;
+
+        public Command Command { get; set; }
+        public string FromName { get; set; } = null!;
+        public string ToName { get; set; } = null!;
+
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(this);
+        }
+        public static Message FromJson(string json)
+        {
+            return JsonSerializer.Deserialize<Message>(json);
+        }
+    }
     interface IMessageSource
     {
         void Send(Message message, IPEndPoint ep);
@@ -32,25 +62,28 @@ namespace DevelopingNET6
     }
     class Server
     {
-        Dictionary<String, IPEndPoint> clients = new Dictionary<string,
-        IPEndPoint>();
+        Dictionary<string, IPEndPoint> clients = new Dictionary<string, IPEndPoint>();
         IMessageSource messageSource;
+        private bool isRunning;  // Флаг для остановки сервера
+
         public Server(IMessageSource source)
         {
             messageSource = source;
+            isRunning = true;  // Изначально сервер работает
         }
+
         void Register(Message message, IPEndPoint fromep)
         {
             Console.WriteLine("Message Register, name = " + message.FromName);
             clients.Add(message.FromName, fromep);
             using (var ctx = new TestContext())
             {
-                if (ctx.Users.FirstOrDefault(x => x.Name == message.FromName)
-                != null) return;
+                if (ctx.Users.FirstOrDefault(x => x.Name == message.FromName) != null) return;
                 ctx.Add(new User { Name = message.FromName });
                 ctx.SaveChanges();
             }
         }
+
         void ConfirmMessageReceived(int? id)
         {
             Console.WriteLine("Message confirmation id=" + id);
@@ -64,21 +97,19 @@ namespace DevelopingNET6
                 }
             }
         }
-        void RelyMessage(Message message)
+
+        void RelayMessage(Message message)
         {
             int? id = null;
             if (clients.TryGetValue(message.ToName, out IPEndPoint ep))
             {
                 using (var ctx = new TestContext())
                 {
-                    var fromUser = ctx.Users.First(x => x.Name ==
-                    message.FromName);
-                    var toUser = ctx.Users.First(x => x.Name ==
-                    message.ToName);
-                    var msg = new DevelopingNET6.Model.Message
+                    var fromUser = ctx.Users.First(x => x.Name == message.FromName);
+                    var toUser = ctx.Users.First(x => x.Name == message.ToName);
+                    var msg = new DevelopingNET6.Message
                     {
-                        FromUser
-                    = fromUser,
+                        FromUser = fromUser,
                         ToUser = toUser,
                         Received = false,
                         Text = message.Text
@@ -89,52 +120,58 @@ namespace DevelopingNET6
                 }
                 var forwardMessage = new Message()
                 {
-                    Id = id,
-                    Command =
-                Command.Message,
+                    Id = (int)id,
+                    Command = Command.Message,
                     ToName = message.ToName,
                     FromName = message.FromName,
-                    Text =
-                message.Text
+                    Text = message.Text
                 };
                 messageSource.Send(forwardMessage, ep);
-                Console.WriteLine($"Message Relied, from = {message.FromName} to = { message.ToName}");
+                Console.WriteLine($"Message Relayed, from = {message.FromName} to = {message.ToName}");
             }
             else
             {
                 Console.WriteLine("Пользователь не найден.");
             }
         }
+
         void ProcessMessage(Message message, IPEndPoint fromep)
         {
-            Console.WriteLine($"Получено сообщение от {message.FromName} для { message.ToName} с командой { message.Command}:");
-        Console.WriteLine(message.Text);
+            Console.WriteLine($"Получено сообщение от {message.FromName} для {message.ToName} с командой {message.Command}:");
+            Console.WriteLine(message.Text);
             if (message.Command == Command.Register)
             {
-                Register(message, new IPEndPoint(fromep.Address,
-                fromep.Port));
+                Register(message, new IPEndPoint(fromep.Address, fromep.Port));
             }
             if (message.Command == Command.Confirmation)
             {
-                Console.WriteLine("Confirmation receiver");
+                Console.WriteLine("Confirmation received");
                 ConfirmMessageReceived(message.Id);
             }
             if (message.Command == Command.Message)
             {
-                RelyMessage(message);
+                RelayMessage(message);
             }
         }
+        public void Stop()
+        {
+            Console.WriteLine("Сервер остановлен.");
+            isRunning = false;
+        }
+
         public void Work()
         {
-            Console.WriteLine("UDP Клиент ожидает сообщений...");
-            while (true)
+            Console.WriteLine("UDP сервер ожидает сообщений...");
+            while (isRunning)  
             {
                 try
                 {
-                    IPEndPoint remoteEndPoint = new
-                    IPEndPoint(IPAddress.Any, 0);
+                    IPEndPoint remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
                     var message = messageSource.Receive(ref remoteEndPoint);
-                    ProcessMessage(message, remoteEndPoint);
+                    if (message != null)
+                    {
+                        ProcessMessage(message, remoteEndPoint);
+                    }
                 }
                 catch (Exception ex)
                 {

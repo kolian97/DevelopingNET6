@@ -6,7 +6,8 @@ namespace DevelopingNET6
     {
         static void Main(string[] args)
         {
-            var server = new Server();
+            IMessageSource messageSource = new UdpMessageSource();
+            var server = new Server(messageSource);
             server.Work();
         }
     }
