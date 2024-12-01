@@ -1,7 +1,9 @@
 ﻿using System.Net;
 using NUnit.Framework;
-using System.Linq;
-namespace DevelopingNET6
+using Grpc.Core;
+using MassTransit.Transports.Fabric;
+using Assert = NUnit.Framework.Assert;
+namespace TestProject
 {
     public class MockMessageSource : IMessageSource
     {
@@ -74,7 +76,7 @@ namespace DevelopingNET6
         [SetUp]
         public void Setup()
         {
-            using (var ctx = new DevelopingNET6.TestContext())
+            using (var ctx = new TestProject.TestContext())
             {
                 ctx.Messages.RemoveRange(ctx.Messages);
                 ctx.Users.RemoveRange(ctx.Users);
@@ -84,7 +86,7 @@ namespace DevelopingNET6
         [TearDown]
         public void TeatDown()
         {
-            using (var ctx = new DevelopingNET6.TestContext())
+            using (var ctx = new TestProject.TestContext())
             {
                 ctx.Messages.RemoveRange(ctx.Messages);
                 ctx.Users.RemoveRange(ctx.Users);

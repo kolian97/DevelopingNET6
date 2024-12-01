@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DevelopingNET6
+namespace TestProject
 {
     class Program
     {

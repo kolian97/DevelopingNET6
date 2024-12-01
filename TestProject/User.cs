@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace DevelopingNET6
+namespace TestProject
 {
     public partial class User
     {

@@ -1,23 +1,23 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Proxies;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace DevelopingNET6
+namespace TestProject
 {
     public partial class TestContext : DbContext
     {
         public virtual DbSet<Message> Messages { get; set; }
         public virtual DbSet<User> Users { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder
-                .LogTo(Console.WriteLine)
-                .UseLazyLoadingProxies()
-                .UseNpgsql("Host=localhost;Username=postgres;Password=example;Database=chatv1");
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder
+                        .LogTo(Console.WriteLine)
+                        .UseLazyLoadingProxies()
+                        .UseNpgsql("Host=localhost;Username=postgres;Password=example;Database=chatv1");
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

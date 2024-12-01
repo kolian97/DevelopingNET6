@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-namespace DevelopingNET6
+namespace TestProject
 {
     public enum Command
     {
@@ -64,12 +64,12 @@ namespace DevelopingNET6
     {
         Dictionary<string, IPEndPoint> clients = new Dictionary<string, IPEndPoint>();
         IMessageSource messageSource;
-        private bool isRunning;  // Флаг для остановки сервера
+        private bool isRunning; 
 
         public Server(IMessageSource source)
         {
             messageSource = source;
-            isRunning = true;  // Изначально сервер работает
+            isRunning = true;
         }
 
         void Register(Message message, IPEndPoint fromep)
@@ -107,7 +107,7 @@ namespace DevelopingNET6
                 {
                     var fromUser = ctx.Users.First(x => x.Name == message.FromName);
                     var toUser = ctx.Users.First(x => x.Name == message.ToName);
-                    var msg = new DevelopingNET6.Message
+                    var msg = new TestProject.Message
                     {
                         FromUser = fromUser,
                         ToUser = toUser,
